@@ -2,11 +2,18 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.main import create_app
-
+from app.core.config import Settings
 
 @pytest.fixture
-def app():
-    return create_app()
+def settings():
+    return Settings(
+        _env_file=None,    # type: ignore
+        environment="test",
+        app_name="From pytest") 
+
+@pytest.fixture
+def app(settings):
+    return create_app(settings=settings)
 
 @pytest.fixture
 async def client(app):
