@@ -1,0 +1,1 @@
+CREATE DATABASE mytickets OWNER mytickets;
