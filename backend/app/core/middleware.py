@@ -1,3 +1,4 @@
+import re
 import uuid
 from collections.abc import Callable
 
@@ -8,7 +9,7 @@ from starlette.responses import Response
 from starlette.types import ASGIApp
 
 REQUEST_ID_HEADER = "X-Request-ID"
-MAX_REQUEST_ID_LENGTH = 64
+_REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9-]{1,64}")
 
 logger = structlog.getLogger(__name__)
 
@@ -41,8 +42,9 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     def _get_request_id(self, request: Request) -> str:
         id = request.headers.get(REQUEST_ID_HEADER)
 
-        if id and len(id) > 0 and len(id) <= MAX_REQUEST_ID_LENGTH:
+        if id and _REQUEST_ID_PATTERN.fullmatch(id):
             return id
+
         if id:
             logger.info("Invalid Request Id, re-generate", request_id=id)
         else:
