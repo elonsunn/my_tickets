@@ -9,6 +9,8 @@ class Settings(BaseSettings):
 
     app_name: str = "My Tickets API"
     environment: Literal["test", "stage", "prod"] = "test"
+    log_level: str = "INFO"
+    json_logs: bool = True
 
 
 @lru_cache
