@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterator
 
 import pytest
+from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
@@ -23,6 +24,12 @@ def app(settings: Settings) -> FastAPI:
 
 
 @pytest.fixture
+async def app_started(app: FastAPI) -> AsyncIterator[FastAPI]:
+    async with LifespanManager(app=app):
+        yield app
+
+
+@pytest.fixture
 async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+    async with AsyncClient(transport=ASGITransport(app=app_started), base_url="http://test") as c:
         yield c

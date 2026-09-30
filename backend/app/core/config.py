@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     environment: Literal["test", "stage", "prod"] = "test"
     log_level: str = "INFO"
     json_logs: bool = True
+    database_url: str = "postgresql+asyncpg://mytickets:mytickets@localhost:54321/mytickets"
+    database_echo: bool = False
 
 
 @lru_cache
