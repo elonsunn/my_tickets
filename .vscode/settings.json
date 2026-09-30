@@ -11,5 +11,6 @@
     "**/.pytest_cache": true,
     "**/.ruff_cache": true
   },
+  "python.analysis.extraPaths": ["${workspaceFolder}/backend"],
   "python.testing.cwd": "${workspaceFolder}/backend"
 }

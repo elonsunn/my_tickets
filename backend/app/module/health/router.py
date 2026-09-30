@@ -1,12 +1,12 @@
 import asyncio
 from collections.abc import Awaitable
-from typing import Literal
 
 import structlog
 from fastapi import APIRouter, Response
 from sqlalchemy import text
 
 from app.core.database import DBsession
+from app.module.health.schema import ReadinessProbeResponse
 
 router = APIRouter(prefix="/health", tags=["health"])
 logger = structlog.get_logger(__name__)
@@ -19,12 +19,10 @@ async def live() -> dict[str, str]:
 
 
 @router.get("/ready")
-async def ready(
-    response: Response, db: DBsession
-) -> dict[Literal["status"], Literal["OK", "unavailable"]]:
+async def ready(response: Response, db: DBsession) -> ReadinessProbeResponse:
     healthy = await _health_probe(db.execute(text("SELECT 1")))
     response.status_code = 200 if healthy else 503
-    return {"status": "OK"} if healthy else {"status": "unavailable"}
+    return ReadinessProbeResponse(status="ok" if healthy else "unavailable")
 
 
 async def _health_probe(check: Awaitable[object]) -> bool:
