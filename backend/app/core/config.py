@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     json_logs: bool = True
     database_url: str = "postgresql+asyncpg://mytickets:mytickets@localhost:54321/mytickets"
     database_echo: bool = False
+    database_pool_size: int = 5
+    database_max_overflow: int = 5
+    database_pool_timeout: int = 20
 
 
 @lru_cache

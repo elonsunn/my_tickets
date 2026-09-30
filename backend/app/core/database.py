@@ -10,8 +10,17 @@ class Base(DeclarativeBase):
     """For all models"""
 
 
-async def create_database_engine(url: str, echo: bool) -> AsyncEngine:
-    return create_async_engine(url=url, echo=echo)
+async def create_database_engine(
+    url: str, *, echo: bool, pool_size: int, max_overflow: int, pool_timeout: float
+) -> AsyncEngine:
+    return create_async_engine(
+        url=url,
+        echo=echo,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
+        pool_timeout=pool_timeout,
+        pool_pre_ping=True,
+    )
 
 
 async def get_db(request: Request) -> AsyncGenerator[AsyncSession]:

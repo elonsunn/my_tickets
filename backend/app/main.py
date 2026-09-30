@@ -14,10 +14,19 @@ from .module.health.router import router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    settings = app.state.settings
+    settings: Settings = app.state.settings
     database_url: str = settings.database_url
     database_echo: bool = settings.database_echo
-    engine: AsyncEngine = await create_database_engine(url=database_url, echo=database_echo)
+    database_pool_size: int = settings.database_pool_size
+    database_max_overflow: int = settings.database_max_overflow
+    database_pool_timeout: float = settings.database_pool_timeout
+    engine: AsyncEngine = await create_database_engine(
+        url=database_url,
+        echo=database_echo,
+        pool_size=database_pool_size,
+        max_overflow=database_max_overflow,
+        pool_timeout=database_pool_timeout,
+    )
     app.state.engine = engine
     app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
 
