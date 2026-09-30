@@ -25,7 +25,11 @@ async def create_database_engine(
 
 async def get_db(request: Request) -> AsyncGenerator[AsyncSession]:
     async with request.app.state.sessionmaker() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
 
 
 DBsession = Annotated[AsyncSession, Depends(get_db)]

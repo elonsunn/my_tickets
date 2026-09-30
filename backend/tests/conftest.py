@@ -30,6 +30,6 @@ async def app_started(app: FastAPI) -> AsyncIterator[FastAPI]:
 
 
 @pytest.fixture
-async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
+async def client(app_started: FastAPI) -> AsyncIterator[AsyncClient]:
     async with AsyncClient(transport=ASGITransport(app=app_started), base_url="http://test") as c:
         yield c

@@ -1,5 +1,5 @@
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
@@ -15,25 +15,18 @@ from .module.health.router import router
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     settings: Settings = app.state.settings
-    database_url: str = settings.database_url
-    database_echo: bool = settings.database_echo
-    database_pool_size: int = settings.database_pool_size
-    database_max_overflow: int = settings.database_max_overflow
-    database_pool_timeout: float = settings.database_pool_timeout
-    engine: AsyncEngine = await create_database_engine(
-        url=database_url,
-        echo=database_echo,
-        pool_size=database_pool_size,
-        max_overflow=database_max_overflow,
-        pool_timeout=database_pool_timeout,
-    )
-    app.state.engine = engine
-    app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
-
-    try:
+    async with AsyncExitStack() as stack:
+        engine: AsyncEngine = await create_database_engine(
+            url=settings.database_url,
+            echo=settings.database_echo,
+            pool_size=settings.database_pool_size,
+            max_overflow=settings.database_max_overflow,
+            pool_timeout=settings.database_pool_timeout,
+        )
+        stack.push_async_callback(engine.dispose)
+        app.state.engine = engine
+        app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
         yield
-    finally:
-        await engine.dispose()
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
