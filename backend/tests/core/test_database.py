@@ -1,12 +1,39 @@
 from collections.abc import AsyncGenerator
 
 import pytest
+import sqlalchemy.dialects.postgresql
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import text
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    CreateTable,
+    Integer,
+    String,
+    Table,
+    text,
+)
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from app.core.database import DBsession
+from app.core.database import Base, DBsession
+
+
+def test_constrains_get_conventional_names() -> None:
+    table = Table(
+        "pytest",
+        Base.metadata,
+        Column("id", Integer, primary_key=True),
+        Column("code", String(10), unique=True),
+        Column("size", Integer),
+        CheckConstraint("size>0", name="positive_size"),
+    )
+
+    ddl_text = str(
+        CreateTable(table).compile(dialect=sqlalchemy.dialects.postgresql.dialect())
+    )
+    assert "CONSTRAINT pk_pytest PRIMARY KEY" in ddl_text
+    assert "CONSTRAINT uq_pytest_code UNIQUE" in ddl_text
+    assert "CONSTRAINT ck_pytest_positive_size CHECK" in ddl_text
 
 
 async def test_database_session_query(app_started: FastAPI) -> None:
@@ -28,11 +55,15 @@ def app_with_ping(app_started: FastAPI) -> FastAPI:
 
 @pytest.fixture
 async def ping_client(app_with_ping: FastAPI) -> AsyncGenerator[AsyncClient]:
-    async with AsyncClient(transport=ASGITransport(app=app_with_ping), base_url="http://test") as c:
+    async with AsyncClient(
+        transport=ASGITransport(app=app_with_ping), base_url="http://test"
+    ) as c:
         yield c
 
 
-async def test_dependency_use_real_database_connection(ping_client: AsyncClient) -> None:
+async def test_dependency_use_real_database_connection(
+    ping_client: AsyncClient,
+) -> None:
     res = await ping_client.get(url="/_test/ping")
     assert res.status_code == 200
     assert res.json() == {"db": 1}
@@ -48,7 +79,9 @@ def app_with_rollback(app_started: FastAPI) -> FastAPI:
     return app_started
 
 
-async def test_failed_request_rollback_uncommited_work(app_with_rollback: FastAPI) -> None:
+async def test_failed_request_rollback_uncommited_work(
+    app_with_rollback: FastAPI,
+) -> None:
     engine: AsyncEngine = app_with_rollback.state.engine
     async with engine.begin() as conn:
         await conn.execute(text("CREATE TABLE _rollback_table (id int)"))

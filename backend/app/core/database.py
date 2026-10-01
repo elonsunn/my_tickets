@@ -2,16 +2,36 @@ from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import Depends, Request
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy import MetaData
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    create_async_engine,
+)
 from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
     """For all models"""
 
+    metadata = MetaData(
+        naming_convention={
+            "pk": "pk_%(table_name)s",
+            "uq": "uq_%(table_name)s_%(column_0_name)s",
+            "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+            "ck": "ck_%(table_name)s_%(constraint_name)s",
+            "ix": "ix_%(column_0_label)s",
+        }
+    )
+
 
 async def create_database_engine(
-    url: str, *, echo: bool, pool_size: int, max_overflow: int, pool_timeout: float
+    url: str,
+    *,
+    echo: bool,
+    pool_size: int,
+    max_overflow: int,
+    pool_timeout: float,
 ) -> AsyncEngine:
     return create_async_engine(
         url=url,
