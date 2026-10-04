@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from app.core.config import Settings, get_settings
 from app.core.database import create_database_engine
+from app.core.exceptions import ApplicationError, application_error_handler
 from app.core.logging import configure_logging
 from app.core.middleware import RequestIDMiddleware
 
@@ -36,5 +37,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title=settings.app_name, lifespan=lifespan)
     app.state.settings = settings
     app.add_middleware(RequestIDMiddleware)
+    app.add_exception_handler(ApplicationError, application_error_handler)
     app.include_router(router=router)
     return app

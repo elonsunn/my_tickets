@@ -10,6 +10,7 @@ dependencies = [
     "fastapi>=0.141.1",
     "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.15.0",
+    "pyjwt>=2.15.1",
     "sqlalchemy[asyncio]>=2.1.1",
     "structlog>=26.1.0",
     "uvicorn[standard]>=0.54.0",
@@ -32,7 +33,7 @@ target-version = "py313"
 select = ["E", "F", "I", "B", "UP", "SIM", "ASYNC", "RUF", "ANN"]
 
 [tool.ruff.format]
-line-ending = "auto"
+line-ending = "lf"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
