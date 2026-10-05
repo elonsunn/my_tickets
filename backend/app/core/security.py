@@ -90,3 +90,9 @@ def decode_token(
         )
     except (TypeError, ValueError, OverflowError, OSError) as e:
         raise InvalidTokenError() from e
+
+
+def get_user_id_from_subject(subject: str) -> int:
+    if subject[0] == "0" or not (subject.isascii() and subject.isdigit()):
+        raise InvalidTokenError()
+    return int(subject)
