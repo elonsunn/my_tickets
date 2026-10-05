@@ -1,22 +1,26 @@
+import os
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
+import anyio
 import jwt
-from fastapi.concurrency import run_in_threadpool
 from pwdlib import PasswordHash
 
 from app.core.exceptions import InvalidTokenError
 
+_LIMITER = anyio.CapacityLimiter(os.cpu_count() or 1)
+_hash = PasswordHash.recommended()
+
 
 async def hash_password(password: str) -> str:
-    return await run_in_threadpool(PasswordHash.recommended().hash, password)
+    return await anyio.to_thread.run_sync(_hash.hash, password, limiter=_LIMITER)
 
 
 async def verify_password(password: str, hashed_password: str) -> bool:
-    return await run_in_threadpool(
-        PasswordHash.recommended().verify, password, hashed_password
+    return await anyio.to_thread.run_sync(
+        _hash.verify, password, hashed_password, limiter=_LIMITER
     )
 
 
