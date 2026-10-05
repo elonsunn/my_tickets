@@ -67,7 +67,11 @@ def decode_token(
 ) -> TokenClaims:
     try:
         payload = jwt.decode(
-            token, secret, algorithms=[algorithm], options={"require": _REQUIRED_CLAIMS}
+            token,
+            secret,
+            algorithms=[algorithm],
+            options={"require": _REQUIRED_CLAIMS},
+            leeway=timedelta(seconds=10),
         )
     except jwt.ExpiredSignatureError as e:
         raise InvalidTokenError("Token expired", code="TOKEN_EXPIRED") from e
@@ -77,9 +81,12 @@ def decode_token(
     if payload["type"] != expected_type:
         raise InvalidTokenError()
 
-    return TokenClaims(
-        subject=payload["sub"],
-        token_type=expected_type,
-        token_id=payload["jti"],
-        expire_at=datetime.fromtimestamp(payload["exp"], UTC),
-    )
+    try:
+        return TokenClaims(
+            subject=payload["sub"],
+            token_type=expected_type,
+            token_id=payload["jti"],
+            expire_at=datetime.fromtimestamp(payload["exp"], UTC),
+        )
+    except (TypeError, ValueError, OverflowError, OSError) as e:
+        raise InvalidTokenError() from e
